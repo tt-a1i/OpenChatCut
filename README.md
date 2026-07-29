@@ -256,7 +256,6 @@ local key and quota; never copy another person's `.env.local`.
 ```bash
 git clone https://github.com/tt-a1i/OpenChatCut.git
 cd OpenChatCut
-git switch feat/seedance-custom-gateway
 npm install
 cp .env.example .env.local
 ```
