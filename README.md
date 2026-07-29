@@ -247,6 +247,69 @@ Only add the model or media-service credentials you actually use to `.env.local`
 
 Local H.264 exports automatically prefer VideoToolbox on macOS and NVENC on compatible Windows systems, then fall back to software encoding. Tune render concurrency and the heavy-export limit with `OPENCHATCUT_RENDER_CONCURRENCY` and `OPENCHATCUT_MAX_ACTIVE_EXPORTS`, disable hardware encoding with `OPENCHATCUT_DISABLE_HARDWARE_ENCODING`, or override FFmpeg-side encoder selection with `OPENCHATCUT_H264_ENCODER`; see [`.env.example`](.env.example).
 
+### Company Hackathon Seedance quick start (fork)
+
+Company teammates who have their own Hackathon key should use the fork that
+contains the custom Seedance gateway adapter. Each teammate keeps a separate
+local key and quota; never copy another person's `.env.local`.
+
+```bash
+git clone https://github.com/tt-a1i/OpenChatCut.git
+cd OpenChatCut
+git switch feat/seedance-custom-gateway
+npm install
+cp .env.example .env.local
+```
+
+Add only your own key to `.env.local`:
+
+```dotenv
+SEEDANCE_PROVIDER=hackathon
+SEEDANCE_BASE_URL=https://maas.devops.xiaohongshu.com/hackson
+SEEDANCE_API_KEY=YOUR_OWN_HACKATHON_KEY
+SEEDANCE_VIDEO_MODEL=Doubao-seedance2.0
+```
+
+Then start the editor:
+
+```bash
+npm run dev
+```
+
+Open <http://localhost:5199>, create a project, and use **Settings → AI
+Services → Video → Seedance** to confirm the configuration is present. The
+connection check is read-only and does not spend video quota; the first real
+generation validates the key. Finish active generations before changing
+`.env.local`, because Vite restarts clear the development server's in-memory
+job registry.
+
+Detailed adapter behavior and troubleshooting are documented in
+[`docs/company/hackathon-video.md`](docs/company/hackathon-video.md).
+
+#### Give this repository to an AI coding agent
+
+Paste the following prompt into Codex or Claude Code from the repository root:
+
+```text
+Set up this OpenChatCut fork for the company Hackathon Seedance service.
+Read README.md, docs/company/hackathon-video.md, and
+skills/openchatcut/SKILL.md before acting. Never print, copy, or commit my key.
+Check Node.js 24 and the current git status, create .env.local from
+.env.example if needed, tell me exactly where to place my own key, install
+dependencies, start OpenChatCut on port 5199, and verify the local app and MCP
+endpoint. Do not submit a quota-consuming video generation unless I explicitly
+ask. When I later request a short film, default to the fast workflow: one
+approved visual anchor, one validation shot, remaining independent shots in
+parallel, no last-frame generation unless continuity requires it, 720p drafts,
+and a 1080p final export after review.
+```
+
+External MCP agents can safely inspect and edit the timeline, but paid video
+generation remains an immediate side effect and is intentionally not part of
+the draft-safe MCP edit session. Generate inside OpenChatCut after explicit
+user approval, then use MCP for assembly, transitions, titles, mixing, and
+verification.
+
 ### Desktop development
 
 ```bash

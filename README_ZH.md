@@ -247,6 +247,63 @@ http://localhost:5199
 
 本地 H.264 导出会在 macOS 上优先使用 VideoToolbox，在兼容的 Windows 设备上优先使用 NVENC，失败时自动回退软件编码。可用 `OPENCHATCUT_RENDER_CONCURRENCY` 和 `OPENCHATCUT_MAX_ACTIVE_EXPORTS` 调整渲染并发及重型导出上限，用 `OPENCHATCUT_DISABLE_HARDWARE_ENCODING` 关闭硬件编码，或用 `OPENCHATCUT_H264_ENCODER` 覆盖 FFmpeg 侧的编码器选择；详见 [`.env.example`](.env.example)。
 
+### 公司 Hackathon Seedance 快速开始（fork）
+
+公司同事如果拥有自己的 Hackathon Key，应使用包含 Seedance 自定义网关
+适配器的 fork。每个人使用自己的本机 Key 和独立额度，不要互相复制
+`.env.local`。
+
+```bash
+git clone https://github.com/tt-a1i/OpenChatCut.git
+cd OpenChatCut
+git switch feat/seedance-custom-gateway
+npm install
+cp .env.example .env.local
+```
+
+只把自己的 Key 写入 `.env.local`：
+
+```dotenv
+SEEDANCE_PROVIDER=hackathon
+SEEDANCE_BASE_URL=https://maas.devops.xiaohongshu.com/hackson
+SEEDANCE_API_KEY=填写你自己的_HACKATHON_KEY
+SEEDANCE_VIDEO_MODEL=Doubao-seedance2.0
+```
+
+启动编辑器：
+
+```bash
+npm run dev
+```
+
+打开 <http://localhost:5199>，创建工程，然后在 **设置 → AI 服务 → 视频 →
+Seedance** 中确认配置已加载。连接检查不会生成视频或消耗额度；第一次真实
+生成才会验证 Key。生成任务进行中不要修改 `.env.local`，因为 Vite 重启会
+清空开发服务器内存中的任务记录。
+
+适配器契约和排障说明见
+[`docs/company/hackathon-video.md`](docs/company/hackathon-video.md)。
+
+#### 直接交给 AI 配置
+
+在仓库根目录把下面这段话交给 Codex 或 Claude Code：
+
+```text
+帮我把这个 OpenChatCut fork 配置为公司 Hackathon Seedance 视频工作台。
+操作前完整阅读 README_ZH.md、docs/company/hackathon-video.md 和
+skills/openchatcut/SKILL.md。不要打印、复制或提交我的 Key。先检查 Node.js
+24 和 git 状态；如有需要，从 .env.example 创建 .env.local，并明确告诉我
+只把自己的 Key 填到哪里；安装依赖，启动 5199 端口，验证本地应用和 MCP
+入口。除非我明确要求，不要提交任何消耗额度的视频生成任务。之后我要求
+制作短片时，默认使用快速模式：一张确认过的视觉母版、先验证一个镜头、
+其余独立镜头并行生成、非必要不生成末帧、先出 720p 草稿，确认后导出
+1080p 成片。
+```
+
+外部 MCP Agent 可以安全地读取和修改时间线，但付费视频生成是立即发生的
+副作用，不属于可回滚的 MCP 草稿会话。用户明确同意后在 OpenChatCut 内生成
+素材，再让 MCP Agent 完成排片、转场、标题、混音与验收。
+
 ### 桌面端开发
 
 ```bash
