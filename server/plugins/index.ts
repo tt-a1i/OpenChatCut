@@ -153,6 +153,18 @@ export function serverPlugins(): Plugin[] {
       },
     }),
     videoGenerationPlugin({
+      get seedanceProvider() {
+        return getKey("SEEDANCE_PROVIDER") === "custom" ? "custom" : "ark";
+      },
+      get seedanceAuthType() {
+        return getKey("SEEDANCE_AUTH_TYPE") === "api-key" ? "api-key" : "bearer";
+      },
+      get seedanceCreatePath() {
+        return getKey("SEEDANCE_CREATE_PATH") || undefined;
+      },
+      get seedancePollPath() {
+        return getKey("SEEDANCE_POLL_PATH") || undefined;
+      },
       get seedanceBaseUrl() {
         return (
           getKey("SEEDANCE_BASE_URL") ||

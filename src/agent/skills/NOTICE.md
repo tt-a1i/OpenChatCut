@@ -16,3 +16,16 @@ MCP 接入方式和编辑器工作流。
 
 原插件声明的许可证为 `GPL-3.0-only`。本说明适用于本目录中经过适配的 Agent Skills
 及其配套文件；OpenChatCut 的其他部分和第三方依赖分别遵循各自的许可条款。
+
+## Seedance directing guidance / Seedance 导演方法
+
+The Seedance reference also includes adapted directing concepts from
+[OpenMontage](https://github.com/calesthio/OpenMontage)'s
+`skills/creative/prompting/seedance-prompting.md` (AGPL-3.0), including explicit
+subject-transition language and a draft-to-final iteration ladder. The wording
+and tool mapping here are OpenChatCut-specific and remain constrained by the
+capabilities implemented in `server/plugins/video.ts`.
+
+Seedance 参考文档还吸收了 OpenMontage 的部分导演方法，包括显式主体转场语言和
+从草稿到成片的迭代阶梯。这里的表述与工具映射已针对 OpenChatCut 调整，并始终以
+`server/plugins/video.ts` 实际接通的能力为准。

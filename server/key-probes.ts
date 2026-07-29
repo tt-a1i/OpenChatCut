@@ -44,6 +44,20 @@ const TIMEOUT_MS = 12_000;
 const t = (): AbortSignal => AbortSignal.timeout(TIMEOUT_MS);
 const base = (get: Get, name: KeyName, def: string): string => (get(name) || def).replace(/\/+$/, '');
 const bearer = (key: string): Record<string, string> => ({ Authorization: `Bearer ${key}` });
+
+export function seedanceProbePlan(
+  provider: string,
+  baseUrl: string,
+  apiKey: string,
+): { deferred: true } | { deferred: false; url: string; headers: Record<string, string> } {
+  if (provider === 'custom') return { deferred: true };
+  return {
+    deferred: false,
+    url: `${baseUrl.replace(/\/+$/, '')}/contents/generations/tasks?page_num=1&page_size=1`,
+    headers: bearer(apiKey),
+  };
+}
+
 function llmProbe(provider: LlmProvider): ProbeDef {
   const names = llmProviderConfigNames(provider);
   const protocol = protocolForProvider(provider);
@@ -158,9 +172,19 @@ export const PROBES: Record<string, ProbeDef> = {
   'voice/minimax': minimaxProbe,
   'video/seedance': {
     needs: [['SEEDANCE_API_KEY']],
-    run: (get) => fetch(`${base(get, 'SEEDANCE_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3')}/contents/generations/tasks?page_num=1&page_size=1`, {
-      signal: t(), headers: bearer(get('SEEDANCE_API_KEY')),
-    }),
+    run: (get) => {
+      const plan = seedanceProbePlan(
+        get('SEEDANCE_PROVIDER'),
+        base(get, 'SEEDANCE_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3'),
+        get('SEEDANCE_API_KEY'),
+      );
+      return plan.deferred
+        ? Promise.resolve(new Response('custom-validation-deferred', { status: 200 }))
+        : fetch(plan.url, { signal: t(), headers: plan.headers });
+    },
+    okText: (bodyText) => bodyText === 'custom-validation-deferred'
+      ? '配置已保存；自定义网关 Key 将在首次视频生成时完成真实验证。'
+      : null,
   },
   'video/kling': {
     needs: [['KLING_API_KEY']],

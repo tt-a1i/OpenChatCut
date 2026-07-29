@@ -1,7 +1,7 @@
 // checks:key-probes pure logic - detection table coverage, override whitelist, status classification,
 // MiniMax base_resp post-check, runProbe does not hit the network early exit. There are no real network requests in the whole process.
 import assert from 'node:assert/strict';
-import { PROBES, classifyStatus, makeGetter, minimaxPostCheck, networkMessage, runProbe } from './key-probes.ts';
+import { PROBES, classifyStatus, makeGetter, minimaxPostCheck, networkMessage, runProbe, seedanceProbePlan } from './key-probes.ts';
 import { LLM_PROVIDER_PRESETS } from '../shared/llm-providers.ts';
 
 // 1. One-to-one correspondence with the provider page of settingsSchema (the page key has the same name); the llm page is derived from the preset,
@@ -48,6 +48,15 @@ assert.equal(minimaxPostCheck(JSON.stringify({ base_resp: { status_code: 0 } }))
 assert.match(minimaxPostCheck(JSON.stringify({ base_resp: { status_code: 1004, status_msg: 'invalid api key' } })) ?? '', /1004.*鉴权失败/);
 assert.match(minimaxPostCheck(JSON.stringify({ base_resp: { status_code: 2049 } })) ?? '', /2049/);
 assert.equal(minimaxPostCheck('not json'), null);
+
+// A custom gateway may not expose a read-only account/list endpoint: do not spend quota or report a false
+// authentication failure by polling an invented task id. Validation is deferred to the first generation.
+assert.deepEqual(seedanceProbePlan('custom', 'https://gateway.example/api', 'secret'), { deferred: true });
+assert.deepEqual(seedanceProbePlan('ark', 'https://ark.example/api/v3/', 'secret'), {
+  deferred: false,
+  url: 'https://ark.example/api/v3/contents/generations/tasks?page_num=1&page_size=1',
+  headers: { Authorization: 'Bearer secret' },
+});
 
 // 5. Network layer failure copy: clearly "does not mean Key error", and timeout is worded separately.
 assert.match(networkMessage(new TypeError('fetch failed')), /网络不可达[\s\S]*不代表 Key 错误/);

@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { createGenerationJob, type GenerationResult } from './generation-jobs.ts';
+import { seedanceRequestTarget, type SeedanceAuthType, type SeedanceProvider } from './seedance-provider.ts';
 import { mediaDataUrl, providerMediaUrl, saveImageUrl, saveVideo } from './video-media.ts';
 import {
   hailuoApiResolution, seedanceApiResolution, validateVideoRequest, videoSeconds,
@@ -10,6 +11,10 @@ export { hailuoApiResolution, seedanceApiResolution, validateVideoRequest } from
 const VIDEO_FAILURES = new Set(['failed', 'expired', 'cancelled']);
 
 interface VideoOptions {
+  seedanceProvider?: SeedanceProvider;
+  seedanceAuthType?: SeedanceAuthType;
+  seedanceCreatePath?: string;
+  seedancePollPath?: string;
   seedanceBaseUrl: string;
   seedanceApiKey: string;
   seedanceModel: string;
@@ -89,11 +94,19 @@ async function generateSeedance(input: ValidVideoRequest, options: VideoOptions)
   for (const path of input.refImagePaths) content.push({ type: 'image_url', image_url: { url: await mediaDataUrl(path) }, role: 'reference_image' });
   for (const path of input.refVideoPaths) content.push({ type: 'video_url', video_url: { url: await providerMediaUrl(path) }, role: 'reference_video' });
   for (const path of input.refAudioPaths) content.push({ type: 'audio_url', audio_url: { url: await mediaDataUrl(path) }, role: 'reference_audio' });
-  const baseUrl = options.seedanceBaseUrl.replace(/\/$/, '');
-  const headers = { Authorization: `Bearer ${options.seedanceApiKey}`, 'Content-Type': 'application/json' };
+  const provider = options.seedanceProvider ?? 'ark';
+  const createTarget = seedanceRequestTarget({
+    provider,
+    baseUrl: options.seedanceBaseUrl,
+    apiKey: options.seedanceApiKey,
+    operation: 'create',
+    authType: options.seedanceAuthType,
+    createPath: options.seedanceCreatePath,
+    pollPath: options.seedancePollPath,
+  });
   const body = seedanceRequestBody(input, options.seedanceModel, content);
-  const task = await requestJson(`${baseUrl}/contents/generations/tasks`, {
-    method: 'POST', headers,
+  const task = await requestJson(createTarget.url, {
+    method: 'POST', headers: createTarget.headers,
     body: JSON.stringify(body),
   });
   const taskId = String(task.id ?? '');
@@ -109,7 +122,17 @@ async function generateSeedance(input: ValidVideoRequest, options: VideoOptions)
     }
     if (VIDEO_FAILURES.has(status)) throw new Error(String((current.error as { message?: string } | undefined)?.message ?? `seedance2 generation ${status}`));
     await wait(2_000);
-    current = await requestJson(`${baseUrl}/contents/generations/tasks/${encodeURIComponent(taskId)}`, { headers });
+    const pollTarget = seedanceRequestTarget({
+      provider,
+      baseUrl: options.seedanceBaseUrl,
+      apiKey: options.seedanceApiKey,
+      operation: 'poll',
+      taskId,
+      authType: options.seedanceAuthType,
+      createPath: options.seedanceCreatePath,
+      pollPath: options.seedancePollPath,
+    });
+    current = await requestJson(pollTarget.url, { headers: pollTarget.headers });
   }
   throw new Error('seedance2 generation timed out');
 }

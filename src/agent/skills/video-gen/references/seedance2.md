@@ -199,6 +199,21 @@ After `@ImageN` / `@VideoN` / `@AudioN`, always a **noun or parenthetical** befo
 | Move | Push-in, Pull-out, Pan, Tilt, Dolly/Track, Orbit, Handheld |
 | Lens / FX | Shallow DOF, Slow-mo, Time-lapse, Hitchcock zoom |
 
+### Director transitions between subjects
+
+Name the transition when a shot changes who or what carries attention. This is
+more reliable than describing two end states and leaving the connection implicit.
+
+| Intent | Prompt pattern |
+| --- | --- |
+| Reveal | `The frame is empty at first; a slow truck right reveals ...` |
+| Disappear | `The subject exits behind the doorway; hold on the empty frame.` |
+| Switch subject | `Rack focus from the foreground product to the person behind it.` |
+| Alternate focus | `Focus on the speaker, pull to the listener's reaction, then return on the final beat.` |
+
+Repeat the concrete identity anchor after every cut. Do not rely on “the same
+person”, a proper name, or a pronoun to carry visual identity across sub-shots.
+
 ### On-screen text & dialogue (prompt-only)
 
 Native audio is always generated. You can request:
@@ -227,6 +242,19 @@ Seedance calls are **stateless**. For recurring identity across separate `submit
 4. After **two** failed text-only retries on identity, stop tweaking prose → change/add anchors or use **edit** mode on the best take.
 
 Multi-character: one anchor image per character; every prompt names the **active** character + attributes and **negates** the others; same-frame → left/right + outfit colors + prefer fixed camera.
+
+## Draft-to-final iteration ladder
+
+1. Generate a short 720p draft that tests composition and motion only.
+2. Review the actual clip before submitting dependent shots.
+3. Lock approved identity/style anchors and record the returned seed when available.
+4. Change one variable at a time: camera, action, lighting, or timing.
+5. Promote only the approved shot to the final resolution.
+6. Keep logos, exact typography, captions, and legal copy out of generated pixels;
+   add them as editable OpenChatCut timeline overlays.
+
+Do not assume a provider offers a separate fast/standard variant. The OpenChatCut
+tool schema and the configured gateway capability are authoritative.
 
 ## When to use Seedance vs Kling vs Hailuo
 

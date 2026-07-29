@@ -198,10 +198,21 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = [
           { value: 'hailuo', label: 'MiniMax 海螺' },
         ]),
         vendors: [
-          { key: 'video/seedance', vendor: 'seedance', title: 'Seedance · 火山', fields: [
+          { key: 'video/seedance', vendor: 'seedance', title: 'Seedance · 火山 / 自定义网关', fields: [
+            {
+              name: 'SEEDANCE_PROVIDER', label: '接入方式', kind: 'select', defaultLabel: '火山 Ark',
+              note: '兼容网关可自定义鉴权方式与任务路径；密钥只保存在服务端。',
+              options: [{ value: 'custom', label: '自定义兼容网关' }],
+            },
             secret('SEEDANCE_API_KEY', 'API Key'),
             text('SEEDANCE_BASE_URL', 'Base URL', '默认 https://ark.cn-beijing.volces.com/api/v3'),
             modelText('SEEDANCE_VIDEO_MODEL', '视频模型', 'doubao-seedance-2-0-260128'),
+            {
+              name: 'SEEDANCE_AUTH_TYPE', label: '鉴权方式', kind: 'select', defaultLabel: 'Bearer',
+              options: [{ value: 'api-key', label: 'api-key Header' }],
+            },
+            modelText('SEEDANCE_CREATE_PATH', '创建任务路径', '/contents/generations/tasks'),
+            modelText('SEEDANCE_POLL_PATH', '查询任务路径', '/contents/generations/tasks/{taskId}', '必须包含 {taskId}。'),
           ] },
           { key: 'video/kling', vendor: 'kling', title: '可灵 Kling', fields: [
             secret('KLING_API_KEY', 'API Key'),
