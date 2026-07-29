@@ -9,7 +9,7 @@ import type { ProjectDoc, TimelineState } from './editor/types';
 import { applyProjectImport, buildProjectExport, parseProjectEnvelope } from './persist/projectTransfer';
 import { purgeProjectCascade } from './persist/mediaCleanup';
 import { applyLiveCaps, applyLiveKeyStatus, applyLiveModels } from './agent/capabilities';
-import { applyAgentModelStatus } from './agent/model-selection';
+import { applyAgentModelStatus, refreshAgentModelCatalogs } from './agent/model-selection';
 import { useT } from './i18n/locale';
 
 const Editor = lazy(() => import('./Editor'));
@@ -78,6 +78,7 @@ export default function App() {
         if (d?.models) {
           applyLiveModels(d.models);              // per-vendor models + PREFERRED_* routing
           applyAgentModelStatus(d.keys ?? {}, d.models);
+          void refreshAgentModelCatalogs(d.keys ?? {}, d.models);
         }
       })
       .catch(() => { /* dev endpoint absent (e.g. preview build) — keep the define snapshot */ });

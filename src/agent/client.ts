@@ -15,6 +15,7 @@ import {
   normalizeOpenAiApiMode,
   protocolForProvider,
   providerApiPath,
+  type LlmProtocol,
   type LlmProvider,
   type OpenAiApiMode,
 } from '../../shared/llm-providers';
@@ -35,17 +36,20 @@ export type ConfiguredLanguageModel = Exclude<LanguageModel, string>;
 export let PROVIDER: LlmProvider = DEFAULT_LLM_PROVIDER;
 export let MODEL = defaultModelForProvider(PROVIDER);
 export let OPENAI_API_MODE: OpenAiApiMode = DEFAULT_OPENAI_API_MODE;
+export let PROTOCOL: LlmProtocol = protocolForProvider(PROVIDER);
 
 export function setLlmConfig(
   provider: unknown,
   model: unknown,
   openAiApiMode: unknown = OPENAI_API_MODE,
+  protocol: LlmProtocol = protocolForProvider(provider),
 ): void {
   PROVIDER = normalizeLlmProvider(provider);
   MODEL = typeof model === 'string' && model.trim()
     ? model.trim()
     : defaultModelForProvider(PROVIDER);
   OPENAI_API_MODE = normalizeOpenAiApiMode(openAiApiMode);
+  PROTOCOL = protocol;
 }
 
 export function setLlmModel(model: string): void {
@@ -67,16 +71,24 @@ const proxyHeaders = (provider: LlmProvider): Record<string, string> => ({
   'x-openchatcut-provider': provider,
 });
 
-const anthropicProvider = createAnthropic({
-  baseURL: PROXY_API_BASE,
-  apiKey: PROXY_KEY,
-  headers: proxyHeaders('anthropic'),
-});
-const openaiProvider = createOpenAI({
-  baseURL: PROXY_API_BASE,
-  apiKey: PROXY_KEY,
-  headers: proxyHeaders('openai'),
-});
+const anthropicProviders = new Map<LlmProvider, ReturnType<typeof createAnthropic>>();
+const openaiProviders = new Map<LlmProvider, ReturnType<typeof createOpenAI>>();
+
+function anthropicProvider(connection: LlmProvider): ReturnType<typeof createAnthropic> {
+  const existing = anthropicProviders.get(connection);
+  if (existing) return existing;
+  const created = createAnthropic({ baseURL: PROXY_API_BASE, apiKey: PROXY_KEY, headers: proxyHeaders(connection) });
+  anthropicProviders.set(connection, created);
+  return created;
+}
+
+function openaiProvider(connection: LlmProvider): ReturnType<typeof createOpenAI> {
+  const existing = openaiProviders.get(connection);
+  if (existing) return existing;
+  const created = createOpenAI({ baseURL: PROXY_API_BASE, apiKey: PROXY_KEY, headers: proxyHeaders(connection) });
+  openaiProviders.set(connection, created);
+  return created;
+}
 // providers with official exclusive packages must use official packages (provider-specific semantics — such as Gemini thought_signature —
 // Handled by the official provider); the rest go to openai-compatible. The real key is injected via the /llm agent.
 const proxied = <T>(provider: LlmProvider, create: (o: { baseURL: string; apiKey: string; headers: Record<string, string> }) => T): T =>
@@ -105,30 +117,36 @@ function compatibleProvider(provider: LlmProvider): ReturnType<typeof createOpen
 }
 
 export function getLanguageModel(
-  provider: LlmProvider = PROVIDER,
-  model: string = MODEL,
+  provider?: LlmProvider,
+  model?: string,
   openAiApiMode: OpenAiApiMode = OPENAI_API_MODE,
+  protocol?: LlmProtocol,
 ): ConfiguredLanguageModel {
-  const protocol = protocolForProvider(provider);
-  if (protocol === 'anthropic') return anthropicProvider(model);
-  if (protocol === 'openai') {
+  const connection = provider ?? PROVIDER;
+  const modelId = model ?? MODEL;
+  const selectedProtocol = protocol ?? (provider === undefined ? PROTOCOL : protocolForProvider(connection));
+  if (selectedProtocol === 'anthropic') return anthropicProvider(connection)(modelId);
+  if (selectedProtocol === 'openai') {
     return openAiApiMode === 'chat'
-      ? openaiProvider.chat(model)
-      : openaiProvider.responses(model);
+      ? openaiProvider(connection).chat(modelId)
+      : openaiProvider(connection).responses(modelId);
   }
-  const dedicated = DEDICATED_PROVIDERS[provider];
-  if (dedicated) return dedicated(model);
-  return compatibleProvider(provider)(model);
+  const dedicated = DEDICATED_PROVIDERS[connection];
+  if (dedicated) return dedicated(modelId);
+  return compatibleProvider(connection)(modelId);
 }
 
 export function getLanguageModelProviderOptions(
-  provider: LlmProvider = PROVIDER,
+  provider?: LlmProvider,
   openAiApiMode: OpenAiApiMode = OPENAI_API_MODE,
+  protocol?: LlmProtocol,
 ): Record<string, Record<string, boolean>> | undefined {
-  if (provider === 'minimax') {
+  const connection = provider ?? PROVIDER;
+  const selectedProtocol = protocol ?? (provider === undefined ? PROTOCOL : protocolForProvider(connection));
+  if (connection === 'minimax') {
     return { minimax: { reasoning_split: true } };
   }
-  return protocolForProvider(provider) === 'openai' && openAiApiMode === 'responses'
+  return selectedProtocol === 'openai' && openAiApiMode === 'responses'
     ? { openai: { store: false } }
     : undefined;
 }

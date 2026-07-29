@@ -356,7 +356,7 @@ export function ChatComposer(props: ChatComposerProps) {
           >
             <Icon name="cloud" size={13} />
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {activeModel?.model ?? t('模型')}
+              {activeModel?.displayModel ?? t('模型')}
             </span>
             <Icon name="chevronDown" size={10} />
           </button>
@@ -423,7 +423,7 @@ export function ChatComposer(props: ChatComposerProps) {
                     {choice.providerLabel}
                   </strong>
                   <small style={{ display: 'block', color: theme.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {choice.model}
+                    {choice.displayModel}
                   </small>
                 </span>
                 {active && <span style={{ color: theme.accent, lineHeight: 0 }}><Icon name="check" size={13} /></span>}
