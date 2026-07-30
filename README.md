@@ -263,8 +263,11 @@ cp .env.example .env.local
 Add only your own key to `.env.local`:
 
 ```dotenv
-SEEDANCE_PROVIDER=hackathon
+SEEDANCE_PROVIDER=custom
+SEEDANCE_AUTH_TYPE=api-key
 SEEDANCE_BASE_URL=https://maas.devops.xiaohongshu.com/hackson
+SEEDANCE_CREATE_PATH=/openai/doubao/contents/generations/tasks
+SEEDANCE_POLL_PATH=/openai/qwen/v1/tasks/{taskId}
 SEEDANCE_API_KEY=YOUR_OWN_HACKATHON_KEY
 SEEDANCE_VIDEO_MODEL=Doubao-seedance2.0
 ```
